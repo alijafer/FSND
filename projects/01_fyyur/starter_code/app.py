@@ -12,6 +12,7 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+from flask_migrate import Migrate
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -22,52 +23,68 @@ app.config.from_object('config')
 db = SQLAlchemy(app)
 
 # TODO: connect to a local postgresql database
-
+migrate = Migrate(app, db)
+#finsh in config app
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1@localhost:5432/fyyur'
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
-
 class Venue(db.Model):
-    __tablename__ = 'Venue'
+  __tablename__ = 'Venue'
+  id = db.Column(db.Integer, primary_key=True)
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+  name = db.Column(db.String)
+  city = db.Column(db.String(120))
+  state = db.Column(db.String(120))
+  address = db.Column(db.String(120))
+  phone = db.Column(db.String(120))
+  image_link = db.Column(db.String(500))
+  facebook_link = db.Column(db.String(120))
+  website = db.Column(db.String(500))
+  seeking_venue = completed = db.Column(db.Boolean, nullable=False, default=False)
+  seeking_description = db.Column(db.String(120))
+  genres = db.Column(db.String(120))
+  
+  
 
 class Artist(db.Model):
-    __tablename__ = 'Artist'
+  __tablename__ = 'Artist'
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String)
+  city = db.Column(db.String(120))
+  state = db.Column(db.String(120))
+  phone = db.Column(db.String(120))
+  genres = db.Column(db.String(120))
+  image_link = db.Column(db.String(500))
+  facebook_link = db.Column(db.String(120))
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+  website = db.Column(db.String(500))
+  seeking_talent = completed = db.Column(db.Boolean, nullable=False, default=False)
+  seeking_description = db.Column(db.String(120))
+  
 
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+class Show(db.Model):
+  __tablename__ = 'Show'
+  id = db.Column(db.Integer, primary_key=True)
+  venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable=False)
+  artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
+  start_time = db.Column(db.DateTime, nullable=False)   
+  venue_name = db.relationship('Venue', backref=db.backref('Shows'))
+  artist = db.relationship('Artist', backref=db.backref('shows'))
 
+db.create_all()
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
 
 def format_datetime(value, format='medium'):
-  date = dateutil.parser.parse(value)
-  if format == 'full':
+    date = dateutil.parser.parse(value)
+    if format == 'full':
       format="EEEE MMMM, d, y 'at' h:mma"
-  elif format == 'medium':
+    elif format == 'medium':
       format="EE MM, dd, y h:mma"
-  return babel.dates.format_datetime(date, format)
+    return babel.dates.format_datetime(date, format)
 
 app.jinja_env.filters['datetime'] = format_datetime
 
@@ -87,27 +104,39 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  data=[]
+  venues_list = Venue.query.all()
+  city_state = set()
+  for venue in venues_list:
+    city_state.add((venue.city, venue.state))
+
+  
+  for location in city_state:
+    data.append({
+        "city": location[0],
+        "state": location[1],
+        "venues": []
+    })
+
+  for venue in venues_list:
+    num_upcoming_shows = 0
+
+    shows = Show.query.filter_by(venue_id=venue.id).all()
+    current_date = datetime.now()
+
+    for show in shows:
+      if show.start_time > current_date:
+          num_upcoming_shows += 1
+
+    for venue_location in data:
+      if venue.state == venue_location['state'] and venue.city == venue_location['city']:
+        venue_location['venues'].append({
+            "id": venue.id,
+            "name": venue.name,
+            "num_upcoming_shows": num_upcoming_shows
+        })
+        
+  
   return render_template('pages/venues.html', areas=data);
 
 @app.route('/venues/search', methods=['POST'])
@@ -131,21 +160,21 @@ def show_venue(venue_id):
   # TODO: replace with real venue data from the venues table, using venue_id
   data1={
     "id": 1,
-    "name": "The Musical Hop",
-    "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    "address": "1015 Folsom Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "123-123-1234",
+    "name": "",
+    "genres": [],
+    "address": "",
+    "city": "",
+    "state": "",
+    "phone": "",
     "website": "https://www.themusicalhop.com",
-    "facebook_link": "https://www.facebook.com/TheMusicalHop",
+    "facebook_link": "",
     "seeking_talent": True,
     "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
+    "image_link": "",
     "past_shows": [{
       "artist_id": 4,
-      "artist_name": "Guns N Petals",
-      "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+      "artist_name": "",
+      "artist_image_link": "",
       "start_time": "2019-05-21T21:30:00.000Z"
     }],
     "upcoming_shows": [],
