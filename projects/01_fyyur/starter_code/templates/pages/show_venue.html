@@ -3,12 +3,17 @@
 {% block content %}
 <div class="row">
 	<div class="col-sm-6">
+		<section>
+			<button id="delete_venue"  class="btn btn-primary btn-lg"
+			  data-id="{{ venue.id }}">Delete</button>
+		  </section>
 		<h1 class="monospace">
 			{{ venue.name }}
 		</h1>
 		<p class="subtitle">
 			ID: {{ venue.id }}
 		</p>
+		
 		<div class="genres">
 			{% for genre in venue.genres %}
 			<span class="genre">{{ genre }}</span>
@@ -74,6 +79,17 @@
 		{% endfor %}
 	</div>
 </section>
+<script>
+	 const id=document.getElementById('delete_venue').dataset['id'];
+	console.log(id);
+	const deleteBtns  = document.getElementById('delete_venue');
+	deleteBtns.onclick = function(e){
+                    //const todoId = e.target.dataset['id'];
+                    fetch('venues/'+id,{
+                        method: 'DELETE'
+                    })}
+
+</script>
 
 {% endblock %}
 
