@@ -167,7 +167,11 @@ def show_venue(venue_id):
   venue = Venue.query.get(venue_id)
   shows_id = Show.query.filter_by(venue_id=venue_id).all()
   past_shows = []
+<<<<<<< HEAD
   upcom_shows = []
+=======
+  upcoming_shows = []
+>>>>>>> 9bb9bbe976418b253a5e3d4b68801a233bb3537c
   current_time = datetime.now()
   for show in shows_id:
     data1={
@@ -177,7 +181,11 @@ def show_venue(venue_id):
       "start_time": format_datetime(str(show.start_time))
         } 
     if show.start_time > current_time:
+<<<<<<< HEAD
       upcom_shows.append(data1)
+=======
+      upcoming_shows.append(data1)
+>>>>>>> 9bb9bbe976418b253a5e3d4b68801a233bb3537c
     else:
       past_shows.append(data1)
     data1={
@@ -194,9 +202,15 @@ def show_venue(venue_id):
      "seeking_description":venue.seeking_description,
       "image_link": venue.image_link,
       "past_shows": past_shows,
+<<<<<<< HEAD
       "upcoming_shows": upcom_shows,
       "past_shows_count": len(past_shows),
       "upcoming_shows_count": len(upcom_shows)
+=======
+      "upcoming_shows": upcoming_shows,
+      "past_shows_count": len(past_shows),
+      "upcoming_shows_count": len(upcoming_shows)
+>>>>>>> 9bb9bbe976418b253a5e3d4b68801a233bb3537c
   }
 
   return render_template('pages/show_venue.html', venue=data1);
@@ -300,7 +314,11 @@ def show_artist(artist_id):
   artist = Artist.query.get(artist_id)
   shows_id = Show.query.filter_by(artist_id=artist_id).all()
   past_shows = []
+<<<<<<< HEAD
   upcom_shows = []
+=======
+  upcoming_shows = []
+>>>>>>> 9bb9bbe976418b253a5e3d4b68801a233bb3537c
   current_time = datetime.now()
   for show in shows_id:
     data1={
@@ -310,7 +328,11 @@ def show_artist(artist_id):
       "start_time": format_datetime(str(show.start_time))
         } 
     if show.start_time > current_time:
+<<<<<<< HEAD
       upcom_shows.append(data1)
+=======
+      upcoming_shows.append(data1)
+>>>>>>> 9bb9bbe976418b253a5e3d4b68801a233bb3537c
     else:
       past_shows.append(data1)
     data1={
@@ -326,9 +348,15 @@ def show_artist(artist_id):
      "seeking_description":artist.seeking_description,
       "image_link": artist.image_link,
       "past_shows": past_shows,
+<<<<<<< HEAD
       "upcoming_shows": upcom_shows,
       "past_shows_count": len(past_shows),
       "upcoming_shows_count": len(upcom_shows)
+=======
+      "upcoming_shows": upcoming_shows,
+      "past_shows_count": len(past_shows),
+      "upcoming_shows_count": len(upcoming_shows)
+>>>>>>> 9bb9bbe976418b253a5e3d4b68801a233bb3537c
   }
   return render_template('pages/show_artist.html', artist=data1)
 
